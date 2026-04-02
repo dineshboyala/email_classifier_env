@@ -9,11 +9,11 @@ Data models for the Email Classifier Env Environment.
 
 The email_classifier_env environment is a simple test environment that echoes back messages.
 """
-from openenv.core.env_server.types import Action, Observation
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel
+from typing import Optional
 
 
+# ✅ Email object
 class Email(BaseModel):
     id: int
     subject: str
@@ -21,13 +21,15 @@ class Email(BaseModel):
     category: Optional[str] = None
 
 
-class EmailClassifierAction(Action):
+# ✅ Action (IMPORTANT NAME)
+class EmailAction(BaseModel):
     action_type: str
     email_id: int
     value: Optional[str] = None
 
 
-class EmailClassifierObservation(Observation):
+# ✅ Observation (IMPORTANT NAME)
+class EmailObservation(BaseModel):
     goal: str
     current_email: Optional[Email]
     step: int
