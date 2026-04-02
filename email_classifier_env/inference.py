@@ -5,7 +5,6 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 print("[START]")
 
-# Reset environment
 res = requests.post(f"{API_BASE_URL}/reset", json={
     "episode_id": "test-1",
     "seed": 42
@@ -24,7 +23,6 @@ while not done and step_count < 10:
 
     subject = email.get("subject", "").lower()
 
-    # 🔥 Simple agent logic (fixed)
     if "win" in subject:
         action = {
             "action_type": "classify",
@@ -40,22 +38,17 @@ while not done and step_count < 10:
 
     print(f"[STEP] {action}")
 
-    # Send action to environment
     res = requests.post(f"{API_BASE_URL}/step", json=action)
 
-    # ✅ Safe JSON handling
     try:
         data = res.json()
     except:
-        print("Error: Invalid response from server")
+        print("Invalid response")
         break
 
-    # ✅ Debug (important for hackathon validation)
     print("Response:", data)
 
-    # ✅ Safe access (prevents crash)
     done = data.get("done", False)
-
     step_count += 1
 
 print("[END]")
