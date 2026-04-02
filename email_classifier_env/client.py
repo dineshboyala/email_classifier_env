@@ -6,17 +6,18 @@
 
 """Email Classifier Env Environment Client."""
 
+from abc import abstractmethod
 from typing import Dict
 
 from openenv.core import EnvClient
 from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
-from .models import EmailClassifierAction, EmailClassifierObservation
+from .models import EmailAction, EmailObservation
 
 
 class EmailClassifierEnv(
-    EnvClient[EmailClassifierAction, EmailClassifierObservation, State]
+    EnvClient[EmailAction, EmailObservation, State]
 ):
     """
     Client for the Email Classifier Env Environment.
@@ -44,12 +45,12 @@ class EmailClassifierEnv(
         ...     client.close()
     """
 
-    def _step_payload(self, action: EmailClassifierAction) -> Dict:
+    def _step_payload(self, action: EmailAction) -> Dict:
         """
-        Convert EmailClassifierAction to JSON payload for step message.
+        Convert EmailAction to JSON payload for step message.
 
         Args:
-            action: EmailClassifierAction instance
+            action: EmailAction instance
 
         Returns:
             Dictionary representation suitable for JSON encoding
@@ -58,9 +59,10 @@ class EmailClassifierEnv(
             "message": action.message,
         }
 
-    def _parse_result(self, payload: Dict) -> StepResult[EmailClassifierObservation]:
+    @abstractmethod
+    def _parse_result(self, payload: Dict) -> StepResult[EmailObservation]:
         """
-        Parse server response into StepResult[EmailClassifierObservation].
+        Parse server response into StepResult[EmailObservation].
 
         Args:
             payload: JSON response data from server
@@ -69,7 +71,7 @@ class EmailClassifierEnv(
             StepResult with EmailClassifierObservation
         """
         obs_data = payload.get("observation", {})
-        observation = EmailClassifierObservation(
+        observation = EmailObservation(
             echoed_message=obs_data.get("echoed_message", ""),
             message_length=obs_data.get("message_length", 0),
             done=payload.get("done", False),
