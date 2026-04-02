@@ -7,10 +7,10 @@
 """Email Classifier Env Environment."""
 
 from .client import EmailClassifierEnv
-from .models import EmailClassifierAction, EmailClassifierObservation
+from .models import EmailAction, EmailObservation
 
 __all__ = [
-    "EmailClassifierAction",
-    "EmailClassifierObservation",
+    "EmailAction",
+    "EmailObservation",
     "EmailClassifierEnv",
 ]
