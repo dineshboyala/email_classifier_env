@@ -21,13 +21,13 @@ class Email(BaseModel):
     category: Optional[str] = None
 
 
-class EmailAction(Action):
+class EmailClassifierAction(Action):
     action_type: str
     email_id: int
     value: Optional[str] = None
 
 
-class EmailObservation(Observation):
+class EmailClassifierObservation(Observation):
     goal: str
     current_email: Optional[Email]
     step: int

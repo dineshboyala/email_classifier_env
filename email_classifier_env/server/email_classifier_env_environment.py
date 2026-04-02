@@ -17,9 +17,9 @@ from uuid import uuid4
 import random
 
 try:
-    from ..models import Email, EmailObservation, EmailAction
+    from ..models import Email,EmailClassifierObservation, EmailClassifierAction
 except:
-    from models import Email, EmailObservation, EmailAction
+    from models import Email,EmailClassifierObservation, EmailClassifierAction
 
 
 class EmailClassifierEnvironment(Environment):
@@ -30,7 +30,7 @@ class EmailClassifierEnvironment(Environment):
         self.task_type = "easy"
 
     # 🔥 RESET (with tasks)
-    def reset(self) -> EmailObservation:
+    def reset(self) ->EmailClassifierObservation:
         self._state = State(episode_id=str(uuid4()), step_count=0)
 
         # 🎯 Random task selection
@@ -42,14 +42,14 @@ class EmailClassifierEnvironment(Environment):
             Email(id=3, subject="Job Offer", body="We are hiring"),
         ]
 
-        return EmailObservation(
+        returnEmailClassifierObservation(
             goal=f"Task: {self.task_type} email handling",
             current_email=self.emails[0],
             step=0
         )
 
     # 🔥 STEP (task-based reward system)
-    def step(self, action: EmailAction):
+    def step(self, action: EmailClassifierAction):
         reward = 0.0
         done = False
 
@@ -88,7 +88,7 @@ class EmailClassifierEnvironment(Environment):
             next_email = self.emails[self._state.step_count]
 
         return (
-            EmailObservation(
+           EmailClassifierObservation(
                 goal=f"Task: {self.task_type} email handling",
                 current_email=next_email,
                 step=self._state.step_count
