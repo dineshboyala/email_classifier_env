@@ -17,82 +17,57 @@ from uuid import uuid4
 
 try:
     from ..models import Email, EmailObservation, EmailAction
-except ModuleNotFoundError:
+except:
     from models import Email, EmailObservation, EmailAction
 
 
 class EmailClassifierEnvironment(Environment):
 
-    SUPPORTS_CONCURRENT_SESSIONS = True
-
     def __init__(self):
         self.state = State(episode_id=str(uuid4()), step_count=0)
         self.emails = []
-        self.history = []
 
     def reset(self) -> EmailObservation:
         self.state = State(episode_id=str(uuid4()), step_count=0)
 
         self.emails = [
-            Email(id=1, subject="Win a free iPhone!!!", body="Click now"),
-            Email(id=2, subject="Meeting tomorrow", body="Schedule meeting at 10AM"),
-            Email(id=3, subject="Job Offer", body="We are hiring you"),
+            Email(id=1, subject="Win money now", body="Click fast"),
+            Email(id=2, subject="Meeting tomorrow", body="Important meeting"),
+            Email(id=3, subject="Job Offer", body="We are hiring"),
         ]
 
-        self.history = []
-
-        return self._get_observation()
+        return EmailObservation(
+            goal="Classify emails correctly",
+            current_email=self.emails[0],
+            step=0
+        )
 
     def step(self, action: EmailAction):
         reward = 0.0
         done = False
-        error = False
 
-        try:
-            if self.state.step_count >= len(self.emails):
-                return self._get_observation(), 0.0, True, {}
+        email = self.emails[self.state.step_count]
 
-            email = self.emails[self.state.step_count]
-
-            if action.action_type == "classify":
-                if "win" in email.subject.lower():
-                    reward += 0.5 if action.value == "spam" else -0.2
-                else:
-                    reward += 0.5 if action.value == "important" else -0.2
-
-                email.category = action.value
-
-            elif action.action_type == "delete":
-                reward += 0.3 if email.category == "spam" else -0.2
-
-            elif action.action_type == "reply":
-                reward += 0.5 if email.category == "important" else -0.3
-
-            else:
-                reward -= 0.1
-
-        except Exception:
-            error = True
-            reward -= 0.5
-
-        self.history.append(f"{action.action_type} on email {action.email_id}")
+        if "win" in email.subject.lower():
+            reward = 1.0 if action.value == "spam" else -1.0
+        else:
+            reward = 1.0 if action.value == "important" else -1.0
 
         self.state.step_count += 1
 
         if self.state.step_count >= len(self.emails):
             done = True
+            next_email = None
+        else:
+            next_email = self.emails[self.state.step_count]
 
-        return self._get_observation(error), reward, done, {}
-
-    def _get_observation(self, error=False) -> EmailObservation:
-        current_email = None
-        if self.state.step_count < len(self.emails):
-            current_email = self.emails[self.state.step_count]
-
-        return EmailObservation(
-            goal="Classify and manage emails",
-            emails=self.emails,
-            current_email=current_email,
-            history=self.history,
-            last_action_error=error
+        return (
+            EmailObservation(
+                goal="Classify emails correctly",
+                current_email=next_email,
+                step=self.state.step_count
+            ),
+            reward,
+            done,
+            {}
         )

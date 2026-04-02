@@ -19,18 +19,15 @@ class Email(BaseModel):
     subject: str
     body: str
     category: Optional[str] = None
-    priority: Optional[str] = None
 
 
 class EmailAction(Action):
-    action_type: str = Field(..., description="classify / reply / delete")
-    email_id: Optional[int] = None
+    action_type: str
+    email_id: int
     value: Optional[str] = None
 
 
 class EmailObservation(Observation):
     goal: str
-    emails: List[Email]
     current_email: Optional[Email]
-    history: List[str]
-    last_action_error: bool = False
+    step: int
