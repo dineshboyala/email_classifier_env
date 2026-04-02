@@ -15,7 +15,6 @@ from openenv.core.env_server.interfaces import Environment
 from openenv.core.env_server.types import State
 from uuid import uuid4
 
-# ✅ FIXED IMPORT (very important)
 try:
     from ..models import Email, EmailObservation, EmailAction
 except ModuleNotFoundError:
@@ -24,7 +23,7 @@ except ModuleNotFoundError:
 
 class EmailClassifierEnvironment(Environment):
 
-    SUPPORTS_CONCURRENT_SESSIONS = True  # ✅ good practice
+    SUPPORTS_CONCURRENT_SESSIONS = True
 
     def __init__(self):
         self.state = State(episode_id=str(uuid4()), step_count=0)
@@ -42,7 +41,7 @@ class EmailClassifierEnvironment(Environment):
 
         self.history = []
 
-        return self._get_observation(error=False)
+        return self._get_observation()
 
     def step(self, action: EmailAction):
         reward = 0.0
@@ -50,7 +49,6 @@ class EmailClassifierEnvironment(Environment):
         error = False
 
         try:
-            # ✅ Safe check
             if self.state.step_count >= len(self.emails):
                 return self._get_observation(), 0.0, True, {}
 
