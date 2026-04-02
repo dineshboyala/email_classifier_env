@@ -24,11 +24,11 @@ except:
 class EmailClassifierEnvironment(Environment):
 
     def __init__(self):
-        self.state = State(episode_id=str(uuid4()), step_count=0)
+        self._state = State(episode_id=str(uuid4()), step_count=0)
         self.emails = []
 
     def reset(self) -> EmailObservation:
-        self.state = State(episode_id=str(uuid4()), step_count=0)
+        self._state = State(episode_id=str(uuid4()), step_count=0)
 
         self.emails = [
             Email(id=1, subject="Win money now", body="Click fast"),
@@ -46,28 +46,32 @@ class EmailClassifierEnvironment(Environment):
         reward = 0.0
         done = False
 
-        email = self.emails[self.state.step_count]
+        email = self.emails[self._state.step_count]
 
         if "win" in email.subject.lower():
             reward = 1.0 if action.value == "spam" else -1.0
         else:
             reward = 1.0 if action.value == "important" else -1.0
 
-        self.state.step_count += 1
+        self._state.step_count += 1
 
-        if self.state.step_count >= len(self.emails):
+        if self._state.step_count >= len(self.emails):
             done = True
             next_email = None
         else:
-            next_email = self.emails[self.state.step_count]
+            next_email = self.emails[self._state.step_count]
 
         return (
             EmailObservation(
                 goal="Classify emails correctly",
                 current_email=next_email,
-                step=self.state.step_count
+                step=self._state.step_count
             ),
             reward,
             done,
             {}
         )
+
+    # ✅ THIS WAS MISSING (VERY IMPORTANT)
+    def state(self) -> State:
+        return self._state
