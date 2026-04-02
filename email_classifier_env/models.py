@@ -10,18 +10,32 @@ Data models for the Email Classifier Env Environment.
 The email_classifier_env environment is a simple test environment that echoes back messages.
 """
 
-from openenv.core.env_server.types import Action, Observation
-from pydantic import Field
+from pydantic import BaseModel
+from typing import List, Optional
 
 
-class EmailClassifierAction(Action):
-    """Action for the Email Classifier Env environment - just a message to echo."""
+class Email(BaseModel):
+    id: int
+    subject: str
+    body: str
+    category: Optional[str] = None  # spam / important
+    priority: Optional[str] = None  # low / medium / high
 
-    message: str = Field(..., description="Message to echo back")
+
+class Observation(BaseModel):
+    goal: str
+    emails: List[Email]
+    current_email: Optional[Email]
+    history: List[str]
+    last_action_error: bool = False
 
 
-class EmailClassifierObservation(Observation):
-    """Observation from the Email Classifier Env environment - the echoed message."""
+class Action(BaseModel):
+    action_type: str  # classify / reply / delete / mark_important
+    email_id: Optional[int] = None
+    value: Optional[str] = None
 
-    echoed_message: str = Field(default="", description="The echoed message")
-    message_length: int = Field(default=0, description="Length of the echoed message")
+
+class Reward(BaseModel):
+    score: float
+    reason: Optional[str] = None
