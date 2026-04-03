@@ -1,7 +1,6 @@
 from openenv.core.env_server.interfaces import Environment
 from openenv.core.env_server.types import State
 from uuid import uuid4
-import random
 
 try:
     from ..models import Email, EmailObservation, EmailAction
@@ -14,13 +13,9 @@ class EmailClassifierEnvironment(Environment):
     def __init__(self):
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self.emails = []
-        self.task_type = "easy"
 
     def reset(self) -> EmailObservation:
         self._state = State(episode_id=str(uuid4()), step_count=0)
-
-        # 🔥 Random task
-        self.task_type = random.choice(["easy", "medium", "hard"])
 
         self.emails = [
             Email(id=1, subject="Win money now", body="Click fast"),
@@ -28,41 +23,37 @@ class EmailClassifierEnvironment(Environment):
             Email(id=3, subject="Job Offer", body="We are hiring"),
         ]
 
-        return EmailObservation(
-            goal=f"Task: {self.task_type} email handling",
+        # ✅ FIXED (must return object, not tuple)
+        obs = EmailObservation(
+            goal="Classify emails",
             current_email=self.emails[0],
-            step=0,
-            reward=0.0   # ✅ REQUIRED
+            step=0
         )
 
+        obs.reward = 0.0
+        obs.done = False
+
+        return obs
+
     def step(self, action: EmailAction):
-        reward = 0.0
-        done = False
+        # ✅ prevent crash
+        if self._state.step_count >= len(self.emails):
+            obs = EmailObservation(
+                goal="Classify emails",
+                current_email=None,
+                step=self._state.step_count
+            )
+            obs.reward = 0.0
+            obs.done = True
+            return obs
 
         email = self.emails[self._state.step_count]
 
-        # 🟢 EASY
-        if self.task_type == "easy":
-            if "win" in email.subject.lower():
-                reward = 1.0 if action.value == "spam" else 0.0
-            else:
-                reward = 1.0 if action.value == "important" else 0.0
-
-        # 🟡 MEDIUM
-        elif self.task_type == "medium":
-            if "meeting" in email.subject.lower():
-                reward = 1.0 if action.value == "important" else 0.0
-            else:
-                reward = 1.0 if action.value == "spam" else 0.0
-
-        # 🔴 HARD
-        elif self.task_type == "hard":
-            if action.action_type == "reply" and "meeting" in email.subject.lower():
-                reward = 1.0
-            elif action.action_type == "delete" and "win" in email.subject.lower():
-                reward = 1.0
-            else:
-                reward = 0.0
+        # ✅ simple reward logic
+        if "win" in email.subject.lower():
+            reward = 1.0 if action.value == "spam" else 0.0
+        else:
+            reward = 1.0 if action.value == "important" else 0.0
 
         self._state.step_count += 1
 
@@ -70,19 +61,20 @@ class EmailClassifierEnvironment(Environment):
             done = True
             next_email = None
         else:
+            done = False
             next_email = self.emails[self._state.step_count]
 
-        return (
-            EmailObservation(
-                goal=f"Task: {self.task_type} email handling",
-                current_email=next_email,
-                step=self._state.step_count,
-                reward=reward   # ✅ REQUIRED
-            ),
-            reward,
-            done,
-            {}
+        # ✅ FIXED return format (NO tuple)
+        obs = EmailObservation(
+            goal="Classify emails",
+            current_email=next_email,
+            step=self._state.step_count
         )
+
+        obs.reward = reward
+        obs.done = done
+
+        return obs
 
     def state(self) -> State:
         return self._state

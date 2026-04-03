@@ -5,48 +5,54 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 print("[START]")
 
-res = requests.post(f"{API_BASE_URL}/reset", json={
-    "episode_id": "test-1",
-    "seed": 42
-})
+# ✅ RESET
+res = requests.post(f"{API_BASE_URL}/reset", json={})
+print("RESET:", res.text)
 
 data = res.json()
-done = False
+
+done = data.get("done", False)
 step_count = 0
 
 while not done and step_count < 10:
     obs = data.get("observation", {})
     email = obs.get("current_email")
 
-    if email is None:
+    if not email:
         break
 
-    subject = email.get("subject", "").lower()
+    subject = email["subject"].lower()
 
+    # simple agent
     if "win" in subject:
-        action = {
-            "action_type": "classify",
-            "email_id": email["id"],
-            "value": "spam"
-        }
+        value = "spam"
     else:
-        action = {
-            "action_type": "classify",
-            "email_id": email["id"],
-            "value": "important"
+        value = "important"
+
+    action = {
+        "action_type": "classify",
+        "email_id": email["id"],
+        "value": value
+    }
+
+    print("[STEP]", action)
+
+    # ✅ IMPORTANT FIX (correct payload)
+    res = requests.post(
+        f"{API_BASE_URL}/step",
+        json={
+            "action": action,
+            "session_id": data.get("session_id")   # 🔥 REQUIRED
         }
+    )
 
-    print(f"[STEP] {action}")
-
-    res = requests.post(f"{API_BASE_URL}/step", json=action)
+    print("STEP:", res.text)
 
     try:
         data = res.json()
     except:
-        print("Invalid response")
+        print("ERROR parsing response")
         break
-
-    print("Response:", data)
 
     done = data.get("done", False)
     step_count += 1

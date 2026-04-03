@@ -20,6 +20,3 @@ class EmailObservation(Observation):
     goal: str
     current_email: Optional[Email]
     step: int
-
-    # ✅ REQUIRED for OpenEnv
-    reward: float = 0.0
