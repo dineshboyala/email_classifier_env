@@ -25,84 +25,64 @@ class EmailClassifierEnvironment(Environment):
             Email(id=3, subject="Job Offer", body="We are hiring"),
         ]
 
-        return EmailObservation(
+        obs = EmailObservation(
             goal="Classify emails",
             current_email=self.emails[0],
             step=0
         )
+        obs.reward = 0.0
+        obs.done = False
 
-    # 🔥 FIXED STEP FUNCTION
-    def step(self, action):
-        try:
-            # ✅ unwrap OpenEnv action
-            action = action.action
+        print("RESET ONCE", flush=True)
 
-            # safety check
-            if self._state.step_count >= len(self.emails):
-                return (
-                    EmailObservation(
-                        goal="Classify emails",
-                        current_email=None,
-                        step=self._state.step_count
-                    ),
-                    0.0,
-                    True,
-                    {}
-                )
+        return obs
 
-            email = self.emails[self._state.step_count]
+    def step(self, action: EmailAction) -> EmailObservation:
+        idx = self._state.step_count
 
-            # ✅ reward logic
-            if "win" in email.subject.lower():
-                reward = 1.0 if action.value == "spam" else 0.0
-            else:
-                reward = 1.0 if action.value == "important" else 0.0
-
-            # track score
-            self.total_reward += reward
-
-            # next step
-            self._state.step_count += 1
-
-            done = self._state.step_count >= len(self.emails)
-
-            if done:
-                next_email = None
-            else:
-                next_email = self.emails[self._state.step_count]
-
-            # debug logs
-            print(f"[DEBUG] step={self._state.step_count}, done={done}", flush=True)
-
-            # ✅ final score print
-            if done:
-                final_score = self.total_reward / len(self.emails)
-                print(f"[FINAL SCORE] {final_score:.2f}", flush=True)
-
-            return (
-                EmailObservation(
-                    goal="Classify emails",
-                    current_email=next_email,
-                    step=self._state.step_count
-                ),
-                reward,
-                done,
-                {}
+        # stop if finished
+        if idx >= len(self.emails):
+            obs = EmailObservation(
+                goal="done",
+                current_email=None,
+                step=idx
             )
+            obs.reward = 0.0
+            obs.done = True
+            return obs
 
-        except Exception as e:
-            print(f"[ERROR] {str(e)}", flush=True)
+        email = self.emails[idx]
 
-            return (
-                EmailObservation(
-                    goal="Error occurred",
-                    current_email=None,
-                    step=self._state.step_count
-                ),
-                -1.0,
-                True,
-                {}
-            )
+        # reward logic
+        if "win" in email.subject.lower():
+            reward = 1.0 if action.value == "spam" else 0.0
+        else:
+            reward = 1.0 if action.value == "important" else 0.0
 
-    def state(self) -> State:
+        self.total_reward += reward
+
+        # move forward
+        self._state.step_count += 1
+        idx = self._state.step_count
+
+        done = idx >= len(self.emails)
+        next_email = None if done else self.emails[idx]
+
+        print(f"STEP {idx} | done={done}", flush=True)
+
+        if done:
+            score = self.total_reward / len(self.emails)
+            print(f"FINAL SCORE: {score:.2f}", flush=True)
+
+        obs = EmailObservation(
+            goal="Classify emails",
+            current_email=next_email,
+            step=idx
+        )
+        obs.reward = reward
+        obs.done = done
+
+        return obs
+
+    def state(self):
         return self._state
