@@ -10,6 +10,7 @@ class Email(BaseModel):
     category: Optional[str] = None
 
 
+# ✅ IMPORTANT: MUST MATCH app.py imports
 class EmailAction(Action):
     action_type: str
     email_id: int
