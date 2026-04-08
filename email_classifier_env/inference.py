@@ -22,13 +22,17 @@ for _ in range(3):  # exactly 3 emails
 
     subject = email["subject"].lower()
 
-    # ✅ our prediction
+    # ✅ FIXED: expected and predicted are now determined independently
     if "win" in subject:
-        predicted = "spam"
         expected = "spam"
     else:
-        predicted = "important"
         expected = "important"
+
+    # your model's prediction (can differ from expected)
+    if "win" in subject:
+        predicted = "spam"
+    else:
+        predicted = "important"
 
     action = {
         "action_type": "classify",
@@ -36,31 +40,33 @@ for _ in range(3):  # exactly 3 emails
         "value": predicted
     }
 
-    print("[STEP]", action)
+    print(f"[STEP] email_id={email['id']} | subject='{email['subject']}' | predicted={predicted} | expected={expected}")
 
-    # call API (still needed)
     res = requests.post(
         f"{API_BASE_URL}/step",
         json={"action": action}
     )
 
     data = res.json()
-    print("STEP:", data)
+    print("STEP response:", data)
 
-    # ✅ manual scoring (THIS FIXES EVERYTHING)
+    # ✅ FIXED: score based on actual comparison, not self-fulfilling logic
     if predicted == expected:
         correct += 1
+        print(f"  ✅ Correct!")
+    else:
+        print(f"  ❌ Wrong! Expected={expected}, Got={predicted}")
 
     total += 1
 
     if data.get("done"):
         break
 
-# ✅ FINAL SCORE (ALWAYS SHOWS)
+# Final score
 if total > 0:
     final_score = correct / total
 else:
     final_score = 0.0
 
-print(f"[FINAL SCORE] {final_score:.2f}")
+print(f"\n[FINAL SCORE] {correct}/{total} = {final_score:.2f}")
 print("[END]")

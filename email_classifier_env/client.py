@@ -4,43 +4,39 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Email Classifier Env Environment Client."""
+"""Email Classifier Environment Client."""
 
-from abc import abstractmethod
 from typing import Dict
 
 from openenv.core import EnvClient
 from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
-from .models import EmailAction, EmailObservation
+try:
+    from .models import EmailAction, EmailObservation  # ← FIXED: try/except for package vs direct run
+except ImportError:
+    from models import EmailAction, EmailObservation
 
 
 class EmailClassifierEnv(
     EnvClient[EmailAction, EmailObservation, State]
 ):
     """
-    Client for the Email Classifier Env Environment.
-
-    This client maintains a persistent WebSocket connection to the environment server,
-    enabling efficient multi-step interactions with lower latency.
-    Each client instance has its own dedicated environment session on the server.
+    Client for the Email Classifier Environment.
 
     Example:
-        >>> # Connect to a running server
         >>> with EmailClassifierEnv(base_url="http://localhost:8000") as client:
         ...     result = client.reset()
-        ...     print(result.observation.echoed_message)
+        ...     print(result.observation.current_email)
         ...
-        ...     result = client.step(EmailClassifierAction(message="Hello!"))
-        ...     print(result.observation.echoed_message)
+        ...     result = client.step(EmailAction(action_type="classify", email_id=1, value="spam"))
+        ...     print(result.observation.current_email)
 
     Example with Docker:
-        >>> # Automatically start container and connect
-        >>> client = EmailClassifierEnv.from_docker_image("email_classifier_env-env:latest")
+        >>> client = EmailClassifierEnv.from_docker_image("email_classifier-env:latest")
         >>> try:
         ...     result = client.reset()
-        ...     result = client.step(EmailClassifierAction(message="Test"))
+        ...     result = client.step(EmailAction(action_type="classify", email_id=1, value="spam"))
         ... finally:
         ...     client.close()
     """
@@ -48,52 +44,36 @@ class EmailClassifierEnv(
     def _step_payload(self, action: EmailAction) -> Dict:
         """
         Convert EmailAction to JSON payload for step message.
-
-        Args:
-            action: EmailAction instance
-
-        Returns:
-            Dictionary representation suitable for JSON encoding
         """
-        return {
-            "message": action.message,
+        return {                         # ← FIXED: matches new EmailAction fields
+            "action_type": action.action_type,
+            "email_id": action.email_id,
+            "value": action.value,
         }
 
-    @abstractmethod
-    def _parse_result(self, payload: Dict) -> StepResult[EmailObservation]:
+    def _parse_result(self, payload: Dict) -> StepResult[EmailObservation]:  # ← FIXED: removed @abstractmethod
         """
         Parse server response into StepResult[EmailObservation].
-
-        Args:
-            payload: JSON response data from server
-
-        Returns:
-            StepResult with EmailClassifierObservation
         """
         obs_data = payload.get("observation", {})
-        observation = EmailObservation(
-            echoed_message=obs_data.get("echoed_message", ""),
-            message_length=obs_data.get("message_length", 0),
+        observation = EmailObservation(    # ← FIXED: matches new EmailObservation fields
+            goal=obs_data.get("goal", ""),
+            current_email=obs_data.get("current_email"),
+            step=obs_data.get("step", 0),
             done=payload.get("done", False),
-            reward=payload.get("reward"),
+            reward=payload.get("reward", 0.0),
             metadata=obs_data.get("metadata", {}),
         )
 
         return StepResult(
             observation=observation,
-            reward=payload.get("reward"),
+            reward=payload.get("reward", 0.0),
             done=payload.get("done", False),
         )
 
     def _parse_state(self, payload: Dict) -> State:
         """
         Parse server response into State object.
-
-        Args:
-            payload: JSON response from state request
-
-        Returns:
-            State object with episode_id and step_count
         """
         return State(
             episode_id=payload.get("episode_id"),

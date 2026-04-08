@@ -4,8 +4,8 @@ from uuid import uuid4
 
 try:
     from ..models import Email, EmailObservation, EmailAction
-except:
-    from models import Email, EmailObservation, EmailAction
+except ImportError:
+    from email_classifier_env.models import Email, EmailObservation, EmailAction
 
 
 class EmailClassifierEnvironment(Environment):
@@ -25,43 +25,30 @@ class EmailClassifierEnvironment(Environment):
             Email(id=3, subject="Job Offer", body="We are hiring"),
         ]
 
-        obs = EmailObservation(
-            goal="Classify emails",
-            current_email=self.emails[0],
-            step=0
-        )
+        obs = EmailObservation(goal="Classify emails", current_email=self.emails[0], step=0)
         obs.reward = 0.0
         obs.done = False
 
         print("RESET ONCE", flush=True)
-
         return obs
 
     def step(self, action: EmailAction) -> EmailObservation:
         idx = self._state.step_count
 
-        # stop if finished
         if idx >= len(self.emails):
-            obs = EmailObservation(
-                goal="done",
-                current_email=None,
-                step=idx
-            )
+            obs = EmailObservation(goal="done", current_email=None, step=idx)
             obs.reward = 0.0
             obs.done = True
             return obs
 
         email = self.emails[idx]
 
-        # reward logic
         if "win" in email.subject.lower():
             reward = 1.0 if action.value == "spam" else 0.0
         else:
             reward = 1.0 if action.value == "important" else 0.0
 
         self.total_reward += reward
-
-        # move forward
         self._state.step_count += 1
         idx = self._state.step_count
 
@@ -74,15 +61,12 @@ class EmailClassifierEnvironment(Environment):
             score = self.total_reward / len(self.emails)
             print(f"FINAL SCORE: {score:.2f}", flush=True)
 
-        obs = EmailObservation(
-            goal="Classify emails",
-            current_email=next_email,
-            step=idx
-        )
+        obs = EmailObservation(goal="Classify emails", current_email=next_email, step=idx)
         obs.reward = reward
         obs.done = done
 
         return obs
 
-    def state(self):
+    @property  # ← FIXED: added missing decorator
+    def state(self) -> State:
         return self._state
