@@ -13,7 +13,7 @@ from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
 try:
-    from .models import EmailAction, EmailObservation  # ← FIXED: try/except for package vs direct run
+    from email_classifier_env.models import EmailAction, EmailObservation  # ← FIXED: try/except for package vs direct run
 except ImportError:
     from models import EmailAction, EmailObservation
 
