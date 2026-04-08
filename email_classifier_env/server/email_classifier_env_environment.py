@@ -3,9 +3,9 @@ from openenv.core.env_server.types import State
 from uuid import uuid4
 
 try:
-    from ..models import Email, EmailObservation, EmailAction
+    from ..models import Email, EmailClassifierAction, EmailClassifierObservation
 except ImportError:
-    from email_classifier_env.models import Email, EmailObservation, EmailAction
+    from email_classifier_env.models import Email, EmailClassifierAction, EmailClassifierObservation
 
 
 class EmailClassifierEnvironment(Environment):
@@ -15,7 +15,7 @@ class EmailClassifierEnvironment(Environment):
         self.emails = []
         self.total_reward = 0.0
 
-    def reset(self) -> EmailObservation:
+    def reset(self) -> EmailClassifierAction:
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self.total_reward = 0.0
 
@@ -25,18 +25,18 @@ class EmailClassifierEnvironment(Environment):
             Email(id=3, subject="Job Offer", body="We are hiring"),
         ]
 
-        obs = EmailObservation(goal="Classify emails", current_email=self.emails[0], step=0)
+        obs = EmailClassifierAction(goal="Classify emails", current_email=self.emails[0], step=0)
         obs.reward = 0.0
         obs.done = False
 
         print("RESET ONCE", flush=True)
         return obs
 
-    def step(self, action: EmailAction) -> EmailObservation:
+    def step(self, action: EmailClassifierObservation) -> EmailClassifierAction:
         idx = self._state.step_count
 
         if idx >= len(self.emails):
-            obs = EmailObservation(goal="done", current_email=None, step=idx)
+            obs = EmailClassifierAction(goal="done", current_email=None, step=idx)
             obs.reward = 0.0
             obs.done = True
             return obs
@@ -61,7 +61,7 @@ class EmailClassifierEnvironment(Environment):
             score = self.total_reward / len(self.emails)
             print(f"FINAL SCORE: {score:.2f}", flush=True)
 
-        obs = EmailObservation(goal="Classify emails", current_email=next_email, step=idx)
+        obs = EmailClassifierAction(goal="Classify emails", current_email=next_email, step=idx)
         obs.reward = reward
         obs.done = done
 
@@ -70,3 +70,7 @@ class EmailClassifierEnvironment(Environment):
     @property  # ← FIXED: added missing decorator
     def state(self) -> State:
         return self._state
+
+
+
+        

@@ -10,14 +10,14 @@ FastAPI application for the Email Classifier Environment.
 
 from openenv.core.env_server.http_server import create_app
 
-from email_classifier_env.models import EmailAction, EmailObservation
+from email_classifier_env.models import EmailClassifierAction, EmailClassifierObservation
 from email_classifier_env.server.email_classifier_env_environment import EmailClassifierEnvironment
 
 
 app = create_app(
     EmailClassifierEnvironment,
-    EmailAction,
-    EmailObservation,
+    EmailClassifierAction,
+    EmailClassifierObservation,
     env_name="email_classifier_env",
     max_concurrent_envs=1,
 )

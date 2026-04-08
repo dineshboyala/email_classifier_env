@@ -13,13 +13,13 @@ from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
 try:
-    from email_classifier_env.models import EmailAction, EmailObservation  # ← FIXED: try/except for package vs direct run
+    from email_classifier_env.models import EmailClassifierAction, EmailClassifierObservation  # ← FIXED: try/except for package vs direct run
 except ImportError:
-    from models import EmailAction, EmailObservation
+    from models import EmailClassifierAction, EmailClassifierObservation
 
 
 class EmailClassifierEnv(
-    EnvClient[EmailAction, EmailObservation, State]
+    EnvClient[EmailClassifierAction, EmailClassifierObservation, State]
 ):
     """
     Client for the Email Classifier Environment.
@@ -29,29 +29,29 @@ class EmailClassifierEnv(
         ...     result = client.reset()
         ...     print(result.observation.current_email)
         ...
-        ...     result = client.step(EmailAction(action_type="classify", email_id=1, value="spam"))
+        ...     result = client.step(EmailClassifierAction(action_type="classify", email_id=1, value="spam"))
         ...     print(result.observation.current_email)
 
     Example with Docker:
         >>> client = EmailClassifierEnv.from_docker_image("email_classifier-env:latest")
         >>> try:
         ...     result = client.reset()
-        ...     result = client.step(EmailAction(action_type="classify", email_id=1, value="spam"))
+        ...     result = client.step(EmailclassifierAction(action_type="classify", email_id=1, value="spam"))
         ... finally:
         ...     client.close()
     """
 
-    def _step_payload(self, action: EmailAction) -> Dict:
+    def _step_payload(self, action: EmailclassifierAction) -> Dict:
         """
-        Convert EmailAction to JSON payload for step message.
+        Convert EmailclassifierAction to JSON payload for step message.
         """
-        return {                         # ← FIXED: matches new EmailAction fields
+        return {                         # ← FIXED: matches new EmailclassifierAction fields
             "action_type": action.action_type,
             "email_id": action.email_id,
             "value": action.value,
         }
 
-    def _parse_result(self, payload: Dict) -> StepResult[EmailObservation]:  # ← FIXED: removed @abstractmethod
+    def _parse_result(self, payload: Dict) -> StepResult[EmailClassifierObservation]:  # ← FIXED: removed @abstractmethod
         """
         Parse server response into StepResult[EmailObservation].
         """
