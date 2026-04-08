@@ -10,10 +10,8 @@ FastAPI application for the Email Classifier Environment.
 
 from openenv.core.env_server.http_server import create_app
 
-# FIXED: Use absolute imports relative to the app root in the container
-# This avoids the "attempted relative import beyond top-level package" error
-from models import EmailAction, EmailObservation
-from server.email_classifier_env_environment import EmailClassifierEnvironment
+from email_classifier_env.models import EmailAction, EmailObservation
+from email_classifier_env.server.email_classifier_env_environment import EmailClassifierEnvironment
 
 
 app = create_app(
