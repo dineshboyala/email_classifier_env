@@ -37,13 +37,13 @@ except Exception as e:
 
 
 # ✅ CORRECT IMPORTS (NO RELATIVE IMPORT)
-from models import EmailAction, EmailObservation
+from email_classifier.models import EmailClassifierAction, EmailClassifierObservation
 from server.email_classifier_env_environment import EmailClassifierEnvironment
 # ✅ CREATE APP
 app = create_app(
     EmailClassifierEnvironment,
-    EmailAction,
-    EmailObservation,
+    EmailClassifierAction,
+    EmailClassifierObservation,
     env_name="email_classifier_env",
     max_concurrent_envs=1,
 )
