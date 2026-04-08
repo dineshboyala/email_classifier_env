@@ -1,72 +1,38 @@
-import requests
+from openai import OpenAI
+import os
 
-API_BASE_URL = "http://127.0.0.1:8000"
+API_BASE_URL = os.getenv("API_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-print("[START]")
+client = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=HF_TOKEN,
+)
 
-res = requests.post(f"{API_BASE_URL}/reset", json={})
-data = res.json()
 
-print("RESET:", data)
+def solve(input_data):
+    # Get email message
+    message = input_data.get("message", "")
 
-correct = 0
-total = 0
-
-for _ in range(3):  # exactly 3 emails
-
-    obs = data["observation"]
-    email = obs["current_email"]
-
-    if email is None:
-        break
-
-    subject = email["subject"].lower()
-
-    # ✅ FIXED: expected and predicted are now determined independently
-    if "win" in subject:
-        expected = "spam"
-    else:
-        expected = "important"
-
-    # your model's prediction (can differ from expected)
-    if "win" in subject:
-        predicted = "spam"
-    else:
-        predicted = "important"
-
-    action = {
-        "action_type": "classify",
-        "email_id": email["id"],
-        "value": predicted
-    }
-
-    print(f"[STEP] email_id={email['id']} | subject='{email['subject']}' | predicted={predicted} | expected={expected}")
-
-    res = requests.post(
-        f"{API_BASE_URL}/step",
-        json={"action": action}
+    # Call LLM
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {"role": "system", "content": "Classify the email as spam or important. Respond only with 'spam' or 'important'."},
+            {"role": "user", "content": message},
+        ],
     )
 
-    data = res.json()
-    print("STEP response:", data)
+    output = response.choices[0].message.content.strip().lower()
 
-    # ✅ FIXED: score based on actual comparison, not self-fulfilling logic
-    if predicted == expected:
-        correct += 1
-        print(f"  ✅ Correct!")
+    # Ensure valid output
+    if "spam" in output:
+        result = "spam"
     else:
-        print(f"  ❌ Wrong! Expected={expected}, Got={predicted}")
+        result = "important"
 
-    total += 1
-
-    if data.get("done"):
-        break
-
-# Final score
-if total > 0:
-    final_score = correct / total
-else:
-    final_score = 0.0
-
-print(f"\n[FINAL SCORE] {correct}/{total} = {final_score:.2f}")
-print("[END]")
+    # ✅ REQUIRED FORMAT
+    return {
+        "action": result
+    }
