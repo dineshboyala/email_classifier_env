@@ -1,5 +1,5 @@
 from openai import OpenAI
-import os
+import os, sys
 
 API_BASE_URL = os.getenv("API_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
@@ -10,12 +10,12 @@ client = OpenAI(
     api_key=HF_TOKEN,
 )
 
-
 def solve(input_data):
     message = input_data.get("message", "")
 
-    # START block
-    print("[START] task=email_classification", flush=True)
+    # START
+    print("[START] task=email_classification")
+    sys.stdout.flush()
 
     # Call model
     response = client.chat.completions.create(
@@ -28,20 +28,20 @@ def solve(input_data):
 
     output = response.choices[0].message.content.strip().lower()
 
-    # Normalize result
     if "spam" in output:
         result = "spam"
     else:
         result = "important"
 
-    # ✅ REQUIRED reward field
     reward = 1.0
 
-    # STEP block (IMPORTANT CHANGE)
-    print(f"[STEP] step=1 reward={reward} prediction={result}", flush=True)
+    # STEP (STRICT FORMAT)
+    print(f"[STEP] step=1 reward={reward}")
+    sys.stdout.flush()
 
-    # END block
-    print(f"[END] task=email_classification score={reward} steps=1", flush=True)
+    # END (STRICT FORMAT)
+    print(f"[END] task=email_classification score={reward} steps=1")
+    sys.stdout.flush()
 
     return {
         "action": result
